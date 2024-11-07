@@ -68,7 +68,7 @@
 
         <Button
             android:id="@+id/playWithBtn"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginHorizontal="10pt"
@@ -80,6 +80,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/black"
+            android:layout_marginBottom="20dp"
             >
 
             <LinearLayout
@@ -102,12 +103,13 @@
                 <TextView
                     android:id="@+id/rest"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:padding="10dp"
                     android:text="@string/description"
                     android:textAlignment="textStart"
                     android:textColor="#FFFFFF"
                     android:textSize="18sp"
+                    android:layout_marginBottom="20dp"
                     android:justificationMode="inter_word" />
             </LinearLayout>
         </ScrollView>
