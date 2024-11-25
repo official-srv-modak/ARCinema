@@ -277,6 +277,7 @@ public class CameraActivity extends AppCompatActivity {
             Intent intent = new Intent(this, VideoPlayerActivity.class);
             intent.putExtra("VIDEO_URL", videoUrl);
             startActivity(intent);
+            finish();
         } else {
             Toast.makeText(this, "Invalid video URL.", Toast.LENGTH_SHORT).show();
         }

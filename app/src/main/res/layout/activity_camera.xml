@@ -17,13 +17,14 @@
     <!-- Rectangle overlay for the region to capture -->
     <View
         android:id="@+id/rectangleOverlay"
-        android:layout_width="287dp"
-        android:layout_height="332dp"
-        android:background="#66FFFFFF"
+        android:layout_width="292dp"
+        android:layout_height="423dp"
+        android:background="@drawable/rectangle_overlay"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <!-- Snap button to capture the image within the rectangle -->
     <ImageView
