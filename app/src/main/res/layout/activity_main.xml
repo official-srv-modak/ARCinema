@@ -77,16 +77,17 @@
         </com.google.android.material.appbar.AppBarLayout>
 
         <!-- RecyclerView for displaying content -->
+
+        <!-- Floating Action Button at the Bottom Right -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="8dp"
             android:background="#000000"
+            android:padding="8dp"
             android:scrollbars="vertical"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-        <!-- Floating Action Button at the Bottom Right -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab"
             android:layout_width="wrap_content"

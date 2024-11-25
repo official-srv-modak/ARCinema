@@ -232,7 +232,7 @@ public class CameraActivity extends AppCompatActivity {
                 } else {
                     runOnUiThread(() -> {
                         dismissLoadingDialog(); // Dismiss loading screen
-                        Toast.makeText(this, "Failed to get video URL.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Failed to get video URL. Seems the image isn't a known poster.", Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception e) {
