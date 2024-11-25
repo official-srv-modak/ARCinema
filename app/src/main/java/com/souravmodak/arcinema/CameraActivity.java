@@ -239,7 +239,7 @@ public class CameraActivity extends AppCompatActivity {
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     dismissLoadingDialog(); // Dismiss loading screen
-                    Toast.makeText(this, "Error uploading image.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error, seems the image isn't a known poster.", Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
