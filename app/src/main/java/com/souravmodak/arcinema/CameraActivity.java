@@ -1,9 +1,12 @@
 package com.souravmodak.arcinema;
 
 import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Size;
 import android.view.View;
@@ -27,8 +30,19 @@ import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class CameraActivity extends AppCompatActivity {
 
@@ -99,9 +113,11 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
                 Bitmap bitmap = imageProxyToBitmap(imageProxy);
-                cropToRectangle(bitmap);
+                int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+                cropToRectangle(bitmap, rotationDegrees);
                 imageProxy.close();
             }
+
 
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
@@ -118,8 +134,10 @@ public class CameraActivity extends AppCompatActivity {
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
     }
 
-    private void cropToRectangle(Bitmap bitmap) {
-        // Get the actual size of the previewView and the rectangleOverlay
+    private void cropToRectangle(Bitmap bitmap, int rotationDegrees) {
+        // Rotate the bitmap based on the rotation degrees from ImageProxy
+        bitmap = rotateBitmap(bitmap, rotationDegrees);
+
         int viewWidth = previewView.getWidth();
         int viewHeight = previewView.getHeight();
 
@@ -128,32 +146,142 @@ public class CameraActivity extends AppCompatActivity {
         int rectWidth = rectangleOverlay.getWidth();
         int rectHeight = rectangleOverlay.getHeight();
 
-        // Calculate scaling factors to match the bitmap's resolution
         float widthScale = (float) bitmap.getWidth() / viewWidth;
         float heightScale = (float) bitmap.getHeight() / viewHeight;
 
-        // Apply scaling to the rectangle's coordinates
         int cropLeft = Math.round(rectLeft * widthScale);
         int cropTop = Math.round(rectTop * heightScale);
         int cropWidth = Math.round(rectWidth * widthScale);
         int cropHeight = Math.round(rectHeight * heightScale);
 
-        // Ensure the crop rectangle does not exceed the bitmap dimensions
         cropWidth = Math.min(cropWidth, bitmap.getWidth() - cropLeft);
         cropHeight = Math.min(cropHeight, bitmap.getHeight() - cropTop);
 
         try {
-            // Crop the bitmap to the calculated rectangle
             Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, cropLeft, cropTop, cropWidth, cropHeight);
 
-            // Use the croppedBitmap as needed, e.g., save or display it
-            Toast.makeText(getApplicationContext(), "Image captured, cropped and will be sent for processing.", Toast.LENGTH_LONG).show();
-            finish();
+            // Save the cropped bitmap as a JPEG file
+            File outputFile = saveBitmapAsFile(croppedBitmap);
+
+            if (outputFile != null) {
+                // Call API with the saved file
+                uploadImageToApi(outputFile);
+            } else {
+                Toast.makeText(this, "Error saving image file.", Toast.LENGTH_SHORT).show();
+            }
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, "Error cropping the image.", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }
+
+    private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
+        if (rotationDegrees == 0) {
+            return bitmap;
+        }
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotationDegrees);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+
+    private File saveBitmapAsFile(Bitmap bitmap) {
+        File file = new File(getExternalFilesDir(null), "cropped_image.jpg");
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void uploadImageToApi(File imageFile) {
+        runOnUiThread(() -> showLoadingDialog()); // Show loading screen
+
+        new Thread(() -> {
+            try {
+                // Configure OkHttpClient with timeouts
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS) // 60 seconds for connection
+                        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS) // 60 seconds for reading
+                        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS) // 60 seconds for writing
+                        .build();
+
+                RequestBody requestBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("imageFile", imageFile.getName(),
+                                RequestBody.create(MediaType.parse("image/jpeg"), imageFile))
+                        .build();
+
+                Request request = new Request.Builder()
+                        .url("http://10.0.0.47:8089/arcinema-image-search/get-url")
+                        .post(requestBody)
+                        .build();
+
+                Response response = client.newCall(request).execute();
+
+                // Handle API response
+                if (response.isSuccessful() && response.body() != null) {
+                    String responseBody = response.body().string();
+                    String videoUrl = parseVideoUrl(responseBody);
+                    runOnUiThread(() -> {
+                        dismissLoadingDialog(); // Dismiss loading screen
+                        startVideoPlayer(videoUrl);
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        dismissLoadingDialog(); // Dismiss loading screen
+                        Toast.makeText(this, "Failed to get video URL.", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    dismissLoadingDialog(); // Dismiss loading screen
+                    Toast.makeText(this, "Error uploading image.", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
+    private ProgressDialog loadingDialog;
+
+    private void showLoadingDialog() {
+        if (loadingDialog == null) {
+            loadingDialog = new ProgressDialog(this);
+            loadingDialog.setMessage("Processing...");
+            loadingDialog.setCancelable(false);
+        }
+        loadingDialog.show();
+    }
+
+    private void dismissLoadingDialog() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+    }
+
+    private String parseVideoUrl(String responseBody) {
+        try {
+            JSONObject jsonObject = new JSONObject(responseBody);
+            return jsonObject.getString("url");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void startVideoPlayer(String videoUrl) {
+        if (videoUrl != null) {
+            Intent intent = new Intent(this, VideoPlayerActivity.class);
+            intent.putExtra("VIDEO_URL", videoUrl);
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Invalid video URL.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
 
     @Override
