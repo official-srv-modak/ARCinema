@@ -215,7 +215,7 @@ public class CameraActivity extends AppCompatActivity {
                         .build();
 
                 Request request = new Request.Builder()
-                        .url("http://10.0.0.47:8089/arcinema-image-search/get-url")
+                        .url(getString(R.string.url))
                         .post(requestBody)
                         .build();
 

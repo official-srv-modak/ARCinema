@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">ARCinema</string>
     <string name="rating">Rating : 5.5/10</string>
+    <string name="url">http://192.168.93.1:8089/arcinema-image-search/get-url</string>
     <string name="description">Description: In a world where hope is fading, a young hero sets out on a journey that will change everything. Facing a harsh landscape and powerful enemies, they are joined by a group of loyal allies who share their determination. Together, they navigate treacherous lands, ancient ruins, and distant realms, encountering heart-stopping challenges and uncovering secrets that will test their strength and courage.\n\nDirected by visionary filmmaker Ava Rowlands, this cinematic masterpiece brings together an ensemble cast led by Liam Archer as the fearless hero, Sophia Kline as the skilled and determined warrior, and Isaac Monroe as the wise mentor. With gripping performances, breathtaking visuals, and a story that resonates with the human spirit, this film is a stirring tale of courage and redemption.</string>
 </resources>
