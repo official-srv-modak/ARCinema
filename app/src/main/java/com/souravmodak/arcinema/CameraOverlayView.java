@@ -28,9 +28,9 @@ public class CameraOverlayView extends View {
         int canvasWidth = canvas.getWidth();
         int canvasHeight = canvas.getHeight();
 
-        // Desired box width and height with 16:9 aspect ratio
-        int boxWidth = (int) (canvasWidth * 0.8); // 80% of width
-        int boxHeight = (int) (boxWidth * 9f / 16f); // Maintain 16:9 ratio
+        // Desired box width and height with 9:16 aspect ratio for portrait
+        int boxHeight = (int) (canvasHeight * 0.8); // 80% of height
+        int boxWidth = (int) (boxHeight * 9f / 16f); // Maintain 9:16 ratio
 
         // Center the box
         int centerX = canvasWidth / 2;
@@ -43,5 +43,9 @@ public class CameraOverlayView extends View {
 
         boxRect.set(left, top, right, bottom);
         canvas.drawRect(boxRect, paint);
+    }
+
+    public Rect getBoxRect() {
+        return new Rect(boxRect);
     }
 }
