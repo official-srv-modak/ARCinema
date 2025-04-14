@@ -213,7 +213,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
                 .build();
 
         Request request = new Request.Builder()
-                .url("http://" + ip + "/arcinema-image-search/get-url")
+                .url("http://" + ip + "/arcinema-image-search/youtube-api/get-url")
                 .post(requestBody)
                 .build();
 
@@ -236,7 +236,8 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
                     try {
                         JSONObject jsonObject = new JSONObject(responseBody);
                         String videoUrl = jsonObject.getString("url");
-                        runOnUiThread(() -> playVideo(videoUrl));
+                        String movieName = jsonObject.getString("movie_name");
+                        runOnUiThread(() -> playVideo(videoUrl, movieName));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -265,7 +266,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
         }
     }
 
-    private void playVideo(String videoUrl) {
+    private void playVideo(String videoUrl, String movieName) {
         loadingScreen.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
 
@@ -315,6 +316,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
             videoView.start();
             captureButton.setVisibility(View.GONE);
         }
+        Toast.makeText(CameraVideoOverlayActivity.this, "Video found: " + movieName, Toast.LENGTH_SHORT).show();
     }
 
     @Override
