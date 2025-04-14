@@ -9,10 +9,14 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,6 +37,13 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
     private Bitmap capturedBitmap;
     private CameraOverlayView overlayView;
 
+    private FrameLayout loadingScreen;  // Loading screen frame
+    private ProgressBar loadingProgressBar;  // Circular progress bar
+    private TextView loadingText;  // Loading text
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +60,9 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
         // Add the overlay box
         overlayView = new CameraOverlayView(this);
         frameLayout.addView(overlayView);
+        loadingScreen = findViewById(R.id.loadingScreen);
+        loadingProgressBar = findViewById(R.id.loadingProgressBar);
+        loadingText = findViewById(R.id.loadingText);
 
         captureButton.setOnClickListener(v -> capturePhoto());
 
@@ -77,15 +91,20 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
 
 
     private void capturePhoto() {
+        loadingScreen.setVisibility(View.VISIBLE);
+        loadingText.setVisibility(View.VISIBLE);
         if (camera != null) {
             camera.takePicture(null, null, (data, camera) -> {
                 capturedBitmap = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length);
-                displayVideoOverlay();
+                new Handler().postDelayed(this::displayVideoOverlay, 2000);
             });
         }
     }
 
     private void displayVideoOverlay() {
+        loadingScreen.setVisibility(View.GONE);
+        loadingText.setVisibility(View.GONE);
+
         if (capturedBitmap != null) {
             Canvas canvas = surfaceHolder.lockCanvas();
             if (canvas != null) {
