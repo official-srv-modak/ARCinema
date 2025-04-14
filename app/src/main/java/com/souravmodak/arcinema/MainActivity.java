@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void fabOnClick(View view) {
-        Intent intent = new Intent(this, CameraActivity.class);
+        Intent intent = new Intent(this, CameraVideoOverlayActivity.class);
         startActivity(intent);
     }
 }
