@@ -58,6 +58,8 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
 
     private boolean isVideoPlaying = false;
 
+    private boolean isProcessing = false;
+
     String ip = "10.0.0.47:8089";
 
 
@@ -103,6 +105,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
 
     private void initializeCamera() {
         try {
+            isProcessing = false;
             camera = Camera.open();
             Camera.Parameters parameters = camera.getParameters();
 
@@ -134,20 +137,60 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
     }
 
     private void focusOnTouch(float x, float y) {
-        if (camera != null) {
-            Camera.Parameters parameters = camera.getParameters();
-            if (parameters.getMaxNumFocusAreas() > 0) {
-                List<Camera.Area> focusAreas = new ArrayList<>();
-                Rect focusRect = calculateFocusArea(x, y);
-                focusAreas.add(new Camera.Area(focusRect, 1000));
-                parameters.setFocusAreas(focusAreas);
-                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                camera.setParameters(parameters);
-                camera.autoFocus((success, cam) -> {
-                    // Optionally handle focus success/failure
-                });
+        if(!isProcessing)
+        {
+            if (camera != null) {
+
+                Camera.Parameters parameters = camera.getParameters();
+                if (parameters.getMaxNumFocusAreas() > 0) {
+                    List<Camera.Area> focusAreas = new ArrayList<>();
+                    Rect focusRect = calculateFocusArea(x, y);
+                    focusAreas.add(new Camera.Area(focusRect, 1000));
+                    parameters.setFocusAreas(focusAreas);
+
+                    // Check if auto focus is supported
+                    List<String> supportedFocusModes = parameters.getSupportedFocusModes();
+                    if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                        camera.setParameters(parameters);
+                        camera.autoFocus((success, cam) -> {
+                            if (success) {
+                                // Optionally handle focus success, for example, play a sound or visual cue
+                                // You can also initiate a single shot if needed after successful focus
+                                // camera.takePicture(null, null, pictureCallback);
+                            } else {
+                                // Optionally handle focus failure, for example, show a message
+                                Toast.makeText(CameraVideoOverlayActivity.this, "Focus failed.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_MACRO)) {
+                        // Fallback to macro focus if auto focus is not supported
+                        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+                        camera.setParameters(parameters);
+                        // Macro focus does not typically require a callback
+                    } else if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                        // Some devices support continuous picture focus
+                        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                        camera.setParameters(parameters);
+                        // Continuous focus does not typically require a manual trigger
+                    } else {
+                        // If no suitable focus mode is found, you might want to log a warning
+                        android.util.Log.w("CameraFocus", "Auto, Macro, or Continuous Picture focus not supported.");
+                    }
+                } else {
+                    android.util.Log.i("CameraFocus", "Maximum number of focus areas is 0.");
+                    // Some devices might not support focus areas, you could potentially trigger a single autoFocus
+                    // without setting focus areas in this case.
+                    List<String> supportedFocusModes = parameters.getSupportedFocusModes();
+                    if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                        camera.autoFocus((success, cam) -> {
+                            // Optional handling
+                        });
+                    }
+                }
             }
         }
+
     }
 
     private Rect calculateFocusArea(float x, float y) {
@@ -163,6 +206,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
     private void capturePhoto() {
         loadingScreen.setVisibility(View.VISIBLE);
         loadingText.setVisibility(View.VISIBLE);
+        isProcessing = true;
         if (camera != null) {
             camera.takePicture(null, null, (data, camera) -> {
                 capturedBitmap = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length);
@@ -275,8 +319,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
 
     private void playVideo(String videoUrl, String movieName) {
         loadingScreen.setVisibility(View.GONE);
-        loadingText.setText(movieName);
-        loadingText.setVisibility(View.VISIBLE);
+        loadingText.setVisibility(View.GONE);
 
         if (capturedBitmap != null) {
             Canvas canvas = surfaceHolder.lockCanvas();
