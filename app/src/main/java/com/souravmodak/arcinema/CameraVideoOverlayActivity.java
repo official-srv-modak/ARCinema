@@ -12,7 +12,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -56,6 +55,8 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
     private FrameLayout loadingScreen;  // Loading screen frame
     private ProgressBar loadingProgressBar;  // Circular progress bar
     private TextView loadingText;  // Loading text
+
+    private boolean isVideoPlaying = false;
 
     String ip = "10.0.0.47:8089";
 
@@ -245,7 +246,6 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
                 } else {
                     runOnUiThread(() -> {
                         loadingScreen.setVisibility(View.GONE);
-                        loadingText.setVisibility(View.GONE);
                         Toast.makeText(CameraVideoOverlayActivity.this, "Couldn't recognize the poster.", Toast.LENGTH_SHORT).show();
                         resetUIForRetry();
                     });
@@ -262,14 +262,21 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
         // Make the capture button visible again
         captureButton.setVisibility(View.VISIBLE);
         // Re-add the overlay view if it was removed
-        if (overlayView.getParent() == null) {
+        if (overlayView != null && overlayView.getParent() == null) {
             frameLayout.addView(overlayView);
         }
+        // Ensure video view is not visible
+        if (videoView.getParent() != null) {
+            frameLayout.removeView(videoView);
+        }
+        loadingText.setVisibility(View.GONE);
+        isVideoPlaying = false;
     }
 
     private void playVideo(String videoUrl, String movieName) {
         loadingScreen.setVisibility(View.GONE);
-        loadingText.setVisibility(View.GONE);
+        loadingText.setText(movieName);
+        loadingText.setVisibility(View.VISIBLE);
 
         if (capturedBitmap != null) {
             Canvas canvas = surfaceHolder.lockCanvas();
@@ -316,6 +323,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
 
             videoView.start();
             captureButton.setVisibility(View.GONE);
+            isVideoPlaying = true;
         }
         Toast.makeText(CameraVideoOverlayActivity.this, "Video found: " + movieName, Toast.LENGTH_SHORT).show();
     }
@@ -331,7 +339,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-        if (camera != null) {
+        if (camera != null && !isVideoPlaying) {
             camera.stopPreview();
             try {
                 camera.setPreviewDisplay(holder);
@@ -360,6 +368,68 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 initializeCamera();
             }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isVideoPlaying) {
+            // Reset the UI to the initial state
+            if (videoView.getParent() != null) {
+                frameLayout.removeView(videoView);
+                videoView.stopPlayback();
+            }
+            initializeCamera();
+            frameLayout.addView(overlayView);
+            captureButton.setVisibility(View.VISIBLE);
+            loadingText.setVisibility(View.GONE);
+            isVideoPlaying = false;
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (camera != null && !isVideoPlaying) {
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+        if (videoView != null && isVideoPlaying) {
+            videoView.pause();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (camera == null && !isVideoPlaying && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            initializeCamera();
+            try {
+                if (surfaceHolder != null) {
+                    camera.setPreviewDisplay(surfaceHolder);
+                    camera.startPreview();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (videoView != null && isVideoPlaying) {
+            videoView.start();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (camera != null && !isVideoPlaying) {
+            camera.release();
+            camera = null;
+        }
+        if (videoView != null && isVideoPlaying) {
+            videoView.stopPlayback();
         }
     }
 }
