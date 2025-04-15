@@ -14,6 +14,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -46,7 +47,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
     private Camera camera;
-    private Button captureButton;
+    private ImageButton captureButton;
     private VideoView videoView;
     private FrameLayout frameLayout;
     private Bitmap capturedBitmap;
@@ -56,7 +57,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
     private ProgressBar loadingProgressBar;  // Circular progress bar
     private TextView loadingText;  // Loading text
 
-    String ip = "192.168.81.97:8089";
+    String ip = "10.0.0.47:8089";
 
 
     @Override
@@ -245,7 +246,7 @@ public class CameraVideoOverlayActivity extends AppCompatActivity implements Sur
                     runOnUiThread(() -> {
                         loadingScreen.setVisibility(View.GONE);
                         loadingText.setVisibility(View.GONE);
-                        Toast.makeText(CameraVideoOverlayActivity.this, "Failed to get video URL", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(CameraVideoOverlayActivity.this, "Couldn't recognize the poster.", Toast.LENGTH_SHORT).show();
                         resetUIForRetry();
                     });
                 }

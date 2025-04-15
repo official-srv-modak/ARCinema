@@ -8,13 +8,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <Button
+    <ImageButton
         android:id="@+id/captureButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Capture"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/menu_camera_white"
+        android:background="@drawable/circular_button_background"
+        android:padding="16dp"
+        android:scaleType="fitCenter"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:contentDescription="Capture" />
 
     <FrameLayout
         android:id="@+id/loadingScreen"
@@ -24,25 +28,24 @@
         android:background="#80000000"
         android:visibility="gone">
 
-    <!-- Loading Text -->
-    <TextView
-        android:id="@+id/loadingText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Loading..."
-        android:textSize="18sp"
-        android:textColor="#ffffff"
-        android:layout_gravity="center|top"
-        android:layout_marginTop="40dp" />
+        <TextView
+            android:id="@+id/loadingText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="18sp"
+            android:textColor="#ffffff"
+            android:layout_gravity="center|top"
+            android:layout_marginTop="40dp" />
 
-    <ProgressBar
-        android:id="@+id/loadingProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminate="true"
-        android:visibility="visible"
-        android:layout_marginTop="100dp" />
-</FrameLayout>
-
+        <ProgressBar
+            android:id="@+id/loadingProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:visibility="visible"
+            android:layout_marginTop="100dp" />
     </FrameLayout>
+
+</FrameLayout>
